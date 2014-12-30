@@ -1,0 +1,23 @@
+[en]
+RTF_MENU_CHOOSE_PLAYER=Select player
+RTF_MENU_CHOOSE_REASON=Select reason
+RTF_REPORTED_FOR=reported for
+RTF_HOST_NAME=Server name:
+RTF_SENDER_NAME=User name:
+RTF_NAME=Suspect's name:
+RTF_STEAMID=Suspect's SteamID:
+RTF_IP=Suspect's IP:
+RTF_REASON=Reason:
+RTF_REPORT_SENDED=[RTF] Report sent.
+
+[ru]
+RTF_MENU_CHOOSE_PLAYER=Выберите игрока
+RTF_MENU_CHOOSE_REASON=Выберите причину
+RTF_REPORTED_FOR=подозревается в
+RTF_HOST_NAME=Имя сервера:
+RTF_SENDER_NAME=Ник отправителя:
+RTF_NAME=Ник подозреваемого:
+RTF_STEAMID=SteamID подозреваемого:
+RTF_IP=IP подозреваемого:
+RTF_REASON=Причина:
+RTF_REPORT_SENDED=[RTF] Жалоба отправлена.
