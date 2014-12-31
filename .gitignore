@@ -1,0 +1,7 @@
+*
+!.gitignore
+!report_to_forum*
+*.amxx
+*.bak
+*копия*.cfg
+!*/

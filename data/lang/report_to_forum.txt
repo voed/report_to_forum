@@ -1,0 +1,29 @@
+[en]
+RTF_MENU_CHOOSE_PLAYER=Select player
+RTF_MENU_CHOOSE_REASON=Select reason
+RTF_REPORTED_FOR=reported for
+RTF_HOST_NAME=Server name:
+RTF_SENDER_NAME=User name:
+RTF_NAME=Suspect's name:
+RTF_STEAMID=Suspect's SteamID:
+RTF_IP=Suspect's IP:
+RTF_REASON=Reason:
+RTF_REPORT_SENDED=[RTF] Report sent.
+RTF_CANT_USE_MINUTES=[RTF] You cant use this function %.0f minutes.
+RTF_CANT_USE_SECONDS=[RTF] You cant use this function %.0f seconds.
+RTF_ADMINS_ONLINE=[RTF] You cant use this function because admin online.
+
+[ru]
+RTF_MENU_CHOOSE_PLAYER=Выберите игрока
+RTF_MENU_CHOOSE_REASON=Выберите причину
+RTF_REPORTED_FOR=подозревается в
+RTF_HOST_NAME=Имя сервера:
+RTF_SENDER_NAME=Ник отправителя:
+RTF_NAME=Ник подозреваемого:
+RTF_STEAMID=SteamID подозреваемого:
+RTF_IP=IP подозреваемого:
+RTF_REASON=Причина:
+RTF_REPORT_SENDED=[RTF] Жалоба отправлена.
+RTF_CANT_USE_MINUTES=[RTF] Вы не можете использовать эту функцию еще %.0f минут.
+RTF_CANT_USE_SECONDS=[RTF] Вы не можете использовать эту функцию еще %.0f секунд.
+RTF_ADMINS_ONLINE=[RTF] Вы не можете использовать эту функцию, когда админ онлайн.
