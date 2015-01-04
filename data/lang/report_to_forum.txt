@@ -12,7 +12,7 @@ RTF_REPORT_SENDED=[RTF] Report sent.
 RTF_CANT_USE_MINUTES=[RTF] You cant use this function %.0f minutes.
 RTF_CANT_USE_SECONDS=[RTF] You cant use this function %.0f seconds.
 RTF_ADMINS_ONLINE=[RTF] You cant use this function because admin online.
-
+RTF_STEAM_URL=Profile link
 [ru]
 RTF_MENU_CHOOSE_PLAYER=Выберите игрока
 RTF_MENU_CHOOSE_REASON=Выберите причину
@@ -27,3 +27,4 @@ RTF_REPORT_SENDED=[RTF] Жалоба отправлена.
 RTF_CANT_USE_MINUTES=[RTF] Вы не можете использовать эту функцию еще %.0f минут.
 RTF_CANT_USE_SECONDS=[RTF] Вы не можете использовать эту функцию еще %.0f секунд.
 RTF_ADMINS_ONLINE=[RTF] Вы не можете использовать эту функцию, когда админ онлайн.
+RTF_STEAM_URL=Ссылка на профиль

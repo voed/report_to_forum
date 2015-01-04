@@ -8,7 +8,9 @@ Special thanks: me <3, AndrewZ, Bloo
 #include <amxmodx>
 #include <amxmisc>
 #include <sqlx>
+#include <report_to_forum>
 
+//#define DEBUG
 //#define VOTEBAN_MODE
 #define CONFIG_DIR "/report_to_forum/report_to_forum.cfg"
 #define LOG_DIR "/report_to_forum/logs.txt"
@@ -16,7 +18,7 @@ Special thanks: me <3, AndrewZ, Bloo
 
 new const PLUGIN_NAME[] = "Report To Forum";
 new const PLUGIN_AUTHOR[] = "voed";
-new const PLUGIN_VERSION[] = "0.2b";
+new const PLUGIN_VERSION[] = "0.3b";
 
 new g_Reasons[][]={	"Wallhack", 
 			"AIMBot", 
@@ -80,105 +82,109 @@ new g_szMapName[64];
 
 new g_LogDir[128];
 
+new bool:g_UserSteam[33];
 new Float:g_fLastReport[33];
 
 public plugin_init()
 {
-	register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
+	register_plugin( PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR )
 	
 	/* RTF Version */
-	register_cvar("rtf_version", PLUGIN_VERSION);
+	register_cvar( "rtf_version", PLUGIN_VERSION, FCVAR_SPONLY | FCVAR_SERVER );
 	
 	/* Plugin ConVars */
-	g_Cvar_ForumSoftwareID 	= register_cvar("rtf_forum_softwareid", "");		// Forum Software ID.
-	g_Cvar_VPSTimeDiff 	= register_cvar("rtf_vps_time_diff", "");		// Time difference used for VPS servers.
+	g_Cvar_ForumSoftwareID 	= register_cvar( "rtf_forum_softwareid", "" );		// Forum Software ID.
+	g_Cvar_VPSTimeDiff 	= register_cvar( "rtf_vps_time_diff", "0");		// Time difference used for VPS servers.
 	
-	g_Cvar_ForumID 		= register_cvar("rtf_forum_id", "");		// Forum ID to post the report
-	g_Cvar_SenderID 	= register_cvar("rtf_sender_id", "2");		// Sender ID to post under.
-	g_Cvar_UserName 	= register_cvar("rtf_username", "rtfbot");		// Sender User Name to use.
-	g_Cvar_Email 		= register_cvar("rtf_email", "");			// Sender Email Address. (Optional)
-	g_Cvar_AdminFlag	= register_cvar("rtf_adminflag", "a");		// Only Post if no admin is available.
-	g_Cvar_Delay		= register_cvar("rtf_report_delay", "1") 	// Cooldown on using report command (in minutes)
+	g_Cvar_ForumID 		= register_cvar( "rtf_forum_id", "4" )		// Forum ID to post the report
+	g_Cvar_SenderID 	= register_cvar( "rtf_sender_id", "2" )		// Sender ID to post under.
+	g_Cvar_UserName 	= register_cvar( "rtf_username", "rtfbot" )	// Sender User Name to use.
+	g_Cvar_Email 		= register_cvar( "rtf_email", "" )		// Sender Email Address. (Optional)
+	g_Cvar_AdminFlag	= register_cvar( "rtf_adminflag", "a" )		// Only Post if no admin is available.
+	g_Cvar_Delay		= register_cvar( "rtf_report_delay", "1" ) 	// Cooldown on using report command (in minutes)
 	
-	g_MySQL_Host		= register_cvar("rtf_host", "")
-	g_MySQL_User 		= register_cvar("rtf_user", "")
-	g_MySQL_Pass		= register_cvar("rtf_pass", "")
-	g_MySQL_DB		= register_cvar("rtf_database", "")
-	g_Cvar_TablePrefix 	= register_cvar("rtf_table_prefix", "")		// Prefix to the tables in your forums database.
+	g_MySQL_Host		= register_cvar( "rtf_host", "127.0.0.1" )
+	g_MySQL_User 		= register_cvar( "rtf_user", "root" )
+	g_MySQL_Pass		= register_cvar( "rtf_pass", "" )
+	g_MySQL_DB		= register_cvar( "rtf_database", "forum" )
+	g_Cvar_TablePrefix 	= register_cvar( "rtf_table_prefix", "" )		// Prefix to the tables in your forums database.
 	
 	#if defined VOTEBAN_MODE
-	register_clcmd("say /voteban", "SayReport")
+	register_clcmd( "say /voteban", "SayReport" )
 	#else
-	register_clcmd("say !report", "SayReport")
+	register_clcmd( "say !report", "SayReport" )
 	#endif
 	
-	g_pHostName      = get_cvar_pointer( "hostname" );
+	g_pHostName      = get_cvar_pointer( "hostname" )
 	
-	register_dictionary("report_to_forum.txt");
+	register_dictionary( "report_to_forum.txt" )
 	
+	new cdir[ 64 ], cfg_dir[ 64 ]
+	get_configsdir( cfg_dir, charsmax( cdir ) )
+	formatex( cdir, charsmax( cdir ), "%s%s", cfg_dir, CONFIG_DIR )
+	formatex( g_LogDir, charsmax( g_LogDir ), "%s%s", cfg_dir, LOG_DIR )
 	
-	new cdir[64], cfg_dir[64]
-	get_configsdir(cfg_dir, charsmax(cdir))
-	formatex(cdir, charsmax(cdir), "%s%s", cfg_dir, CONFIG_DIR)
-	formatex(g_LogDir, charsmax(g_LogDir), "%s%s", cfg_dir, LOG_DIR)
+	rtf_error( 0, "log testing" )
 	
-	rtf_error(0, "log testing")
-	
-	if(file_size(g_LogDir) > LOG_FILE_SIZE*1024)
+	if( file_size( g_LogDir ) > LOG_FILE_SIZE*1024 )
 	{
-		delete_file(g_LogDir)
+		delete_file( g_LogDir )
 	}
 	
-	if(file_exists(cdir))
+	if( file_exists( cdir ) )
 	{
-		server_cmd("exec %s", cdir)
+		server_cmd( "exec %s", cdir )
 		server_exec()
 	}
 	else
-		rtf_error(1, "[RTF] Config file %s does not exists", cdir)
+		rtf_error( 1, "[RTF] Config file %s does not exists", cdir )
 		
 		
-	new conn[4][64]
-	get_pcvar_string(g_MySQL_Host, conn[0], 32)
-	get_pcvar_string(g_MySQL_User, conn[1], 32)
-	get_pcvar_string(g_MySQL_Pass, conn[2], 32)
-	get_pcvar_string(g_MySQL_DB, conn[3], 32)
+	new conn[4][33]
+	get_pcvar_string( g_MySQL_Host, conn[0], 32)
+	get_pcvar_string( g_MySQL_User, conn[1], 32)
+	get_pcvar_string( g_MySQL_Pass, conn[2], 32)
+	get_pcvar_string( g_MySQL_DB, conn[3], 32 )
 	
-	SQL_SetAffinity("mysql")	
-	g_SqlTuple = SQL_MakeDbTuple(conn[0],conn[1],conn[2],conn[3])
-	SQL_SetCharset(g_SqlTuple, "utf8");
+	SQL_SetAffinity( "mysql" )	
+	g_SqlTuple = SQL_MakeDbTuple( conn[ 0 ], conn[ 1 ], conn[ 2 ], conn[ 3 ] )
+	SQL_SetCharset( g_SqlTuple, "utf8" )
    
 	// ok, we're ready to connect
 	new ErrorCode
-	SqlConnection = SQL_Connect(g_SqlTuple,ErrorCode,g_Error,511)
-	if(SqlConnection == Empty_Handle)
-		rtf_error(1, "[MYSQL] %s", g_Error)
+	SqlConnection = SQL_Connect( g_SqlTuple, ErrorCode, g_Error, charsmax( g_Error ) )
+	if( SqlConnection == Empty_Handle )
+		rtf_error( 1, "[MYSQL] %s", g_Error )
 }
 
 public plugin_cfg()
 {	
-	get_pcvar_string(g_Cvar_UserName, g_szUserName, sizeof(g_szUserName));
-	get_pcvar_string(g_Cvar_Email, g_szEmail, sizeof(g_szEmail));
-	g_iForumID = get_pcvar_num(g_Cvar_ForumID);
-	g_iSenderID = get_pcvar_num(g_Cvar_SenderID);
+	get_pcvar_string( g_Cvar_UserName, g_szUserName, charsmax( g_szUserName ) )
+	get_pcvar_string( g_Cvar_Email, g_szEmail, charsmax( g_szEmail ) )
+	g_iForumID = get_pcvar_num( g_Cvar_ForumID )
+	g_iSenderID = get_pcvar_num( g_Cvar_SenderID )
 	
 	/* Cache the Forum Softare ID */
-	g_iForumSoftwareID = SupportedForums:get_pcvar_num(g_Cvar_ForumSoftwareID);
+	g_iForumSoftwareID = SupportedForums:get_pcvar_num( g_Cvar_ForumSoftwareID )
 	
 	/* Get the Table Prefix */
-	get_pcvar_string(g_Cvar_TablePrefix, g_szTablePrefix, charsmax(g_szTablePrefix))
-	get_mapname(g_szMapName, charsmax(g_szMapName))
+	get_pcvar_string( g_Cvar_TablePrefix, g_szTablePrefix, charsmax( g_szTablePrefix ) )
+	get_mapname( g_szMapName, charsmax ( g_szMapName ) )
 	
 }
 
+public client_connect( id )
+{
+	g_UserSteam[ id ] = is_user_steam( id )
+}
 public client_disconnect(id)
 {
-	g_fLastReport[id] = 0.0
+	g_fLastReport[ id ] = 0.0
 }
 
 public plugin_end()
 {
-	SQL_FreeHandle(g_SqlTuple)
+	SQL_FreeHandle( g_SqlTuple )
 }
 
 public SayReport(id)
@@ -188,17 +194,16 @@ public SayReport(id)
 	{
 		new Float:delay = get_pcvar_float(g_Cvar_Delay)*60;
 		new Float:timeleft = gametime - g_fLastReport[id];
-		client_print(id, print_chat, "%.0f %.0f %.0f", gametime, delay, timeleft)
 		if(timeleft < delay)
 		{
 			new Float:rem  = (delay - timeleft)
 			if(floatround(rem/60, floatround_floor))
 			{
-				client_print(id, print_chat, "%L", id, "RTF_CANT_USE_MINUTES %.0f", rem/60)
+				client_print(id, print_chat, "%L", id, "RTF_CANT_USE_MINUTES", rem/60)
 			}
 			else
 			{
-				client_print(id, print_chat, "%L", id, "RTF_CANT_USE_SECONDS %.0f", rem)
+				client_print(id, print_chat, "%L", id, "RTF_CANT_USE_SECONDS", rem)
 			}
 			
 			return PLUGIN_HANDLED
@@ -219,7 +224,7 @@ public SayReport(id)
 	for (new i; i < i_Num; i++)
 	{
 		i_Player = s_Players[i]
-		
+		#if !defined(DEBUG)
 		if (i_Player == id)
 			continue
 			
@@ -229,7 +234,7 @@ public SayReport(id)
 			menu_destroy(i_Menu)
 			return PLUGIN_HANDLED
 		}
-			
+		#endif
 		get_user_name(i_Player, s_Name, charsmax(s_Name))
 		num_to_str(i_Player, s_Player, charsmax(s_Player))
 		menu_additem(i_Menu, s_Name, s_Player, 0)
@@ -319,7 +324,19 @@ public SendReport(sender_id, target_id, reason[])
 	formatex(g_szPostMessage, charsmax(g_szPostMessage), "%L %s%s", LANG_SERVER, "RTF_HOST_NAME", g_szHostName, br)
 	format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s%s", g_szPostMessage, LANG_SERVER, "RTF_SENDER_NAME", sender_name, br)
 	format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s%s", g_szPostMessage, LANG_SERVER, "RTF_NAME", name, br)
-	format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s%s", g_szPostMessage, LANG_SERVER, "RTF_STEAMID", steamid, br)
+	
+	if(g_UserSteam[target_id])
+	{
+		new url[64]
+		rtf_get_steamurl(steamid, url, charsmax(url))
+		format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s ", g_szPostMessage, LANG_SERVER, "RTF_STEAMID", steamid)
+		format(g_szPostMessage, charsmax(g_szPostMessage), "%s[url=%s %L [/url]%s", g_szPostMessage, url, LANG_SERVER, "RTF_STEAM_URL", br)
+	}
+	else
+	{
+		format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s%s", g_szPostMessage, LANG_SERVER, "RTF_STEAMID", steamid, br)
+	}
+	
 	format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s%s", g_szPostMessage, LANG_SERVER, "RTF_IP", ip, br)
 	format(g_szPostMessage, charsmax(g_szPostMessage), "%s%L %s", g_szPostMessage, LANG_SERVER, "RTF_REASON", szReason)
 	
@@ -771,54 +788,7 @@ public UpdateUserPostCount(iPostCount)
         SQL_FreeHandle(Query)
 }
 
-
-stock SeoTitle(szString[], len)
-{
-	replace_all(szString, len, " ", "-");
-	strtolower(szString)
-}
-
-stock mysql_escape_string(dest[], len)
-{
-	replace_all(dest, len, "\\", "\\\\")
-	replace_all(dest, len, "\0", "\\0")
-	replace_all(dest, len, "\n", "\\n")
-	replace_all(dest, len, "\r", "\\r")
-	replace_all(dest, len, "\x1a", "\Z")
-	replace_all(dest, len, "'", "\'")
-	replace_all(dest, len, "^"", "\^"")
-	
-	return 1
-}
-
-stock GetWebSafeString(szString[], len)
-{	
-	replace_all(szString, len, "/", "");
-	replace_all(szString, len, "\\", "");
-	replace_all(szString, len, "[", "");
-	replace_all(szString, len, "]", "");
-	replace_all(szString, len, "}", "");
-	replace_all(szString, len, "{", "");
-	replace_all(szString, len, "|", "");
-	replace_all(szString, len, "?", "");
-	replace_all(szString, len, "=", "");
-	replace_all(szString, len, "+", "");
-	replace_all(szString, len, ">", "");
-	replace_all(szString, len, "<", "");
-	replace_all(szString, len, "*", "");
-	replace_all(szString, len, "\", "");
-	replace_all(szString, len, "'", "");
-	replace_all(szString, len, "`", "");
-	replace_all(szString, len, "!", "");
-	replace_all(szString, len, "@", "");
-	replace_all(szString, len, "#", "");
-	replace_all(szString, len, "$", "");
-	replace_all(szString, len, "%", "");
-	replace_all(szString, len, "^^", "");
-	replace_all(szString, len, "&", "");
-}
-
-stock rtf_error( const failstate, const message[], any:... )
+public rtf_error( const failstate, const message[], any:... )
 {
 	new msg[192]
 	vformat( msg, charsmax( msg ), message, 3 )
