@@ -16,6 +16,10 @@ Special thanks: me <3, AndrewZ, Bloo
 #define LOG_DIR "/report_to_forum/logs.txt"
 #define LOG_FILE_SIZE 50 //maximum logfile size in kB
 
+#if AMXX_VERSION_NUM < 183
+#define MAX_NAME_LENGTH 33
+#endif
+
 new const PLUGIN_NAME[] = "Report To Forum";
 new const PLUGIN_AUTHOR[] = "voed";
 new const PLUGIN_VERSION[] = "0.3b";
@@ -148,7 +152,9 @@ public plugin_init()
 	
 	SQL_SetAffinity( "mysql" )	
 	g_SqlTuple = SQL_MakeDbTuple( conn[ 0 ], conn[ 1 ], conn[ 2 ], conn[ 3 ] )
+	#if AMXX_VERSION_NUM < 182
 	SQL_SetCharset( g_SqlTuple, "utf8" )
+	#endif
    
 	// ok, we're ready to connect
 	new ErrorCode
@@ -403,7 +409,10 @@ public SendForumPost()
 		case FORUM_SMF:
 			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %stopics (id_board, approved) VALUES ('%d', '1');", g_szTablePrefix, g_iForumID);
 		case FORUM_PHPBB:
-			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %stopics (forum_id, topic_title, topic_poster, topic_time, topic_views, topic_first_poster_name, topic_first_poster_colour, topic_last_poster_id, topic_last_poster_name, topic_last_post_subject, topic_last_post_time, topic_last_view_time, topic_posts_approved) VALUES ('%d', '%s', '%d', '%d', '1', '%s', 'AA0000', '%d', '%s', '%s', '%d', '%d', '1');", g_szTablePrefix, g_iForumID, g_szPostTitle, g_iSenderID, g_iTimeStamp, g_szUserName, g_iSenderID, g_szUserName, g_szPostTitle, g_iTimeStamp, g_iTimeStamp);
+		{
+			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %stopics (forum_id, topic_title, topic_poster, topic_time, topic_views, topic_first_poster_name, topic_first_poster_colour, topic_last_poster_id, topic_last_poster_name, topic_last_post_subject, topic_last_post_time, topic_last_view_time, topic_posts_approved)")
+			format(szSQLQuery, charsmax(szSQLQuery), "%s VALUES ('%d', '%s', '%d', '%d', '1', '%s', 'AA0000', '%d', '%s', '%s', '%d', '%d', '1');", szSQLQuery, g_szTablePrefix, g_iForumID, g_szPostTitle, g_iSenderID, g_iTimeStamp, g_szUserName, g_iSenderID, g_szUserName, g_szPostTitle, g_iTimeStamp, g_iTimeStamp);
+		}
 		case FORUM_WBBLITE:
 			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %sthread (boardID, topic, time, userID, username, lastPostTime, lastPosterID, lastPoster) VALUES ('%d', '%s', '%d', '%d', '%s', '%d', '%d', '%s');", g_szTablePrefix, g_iForumID, g_szPostTitle, g_iTimeStamp, g_iSenderID, g_szUserName, g_iTimeStamp, g_iSenderID, g_szUserName);
 		case FORUM_AEF:
@@ -413,7 +422,10 @@ public SendForumPost()
 		case FORUM_XMB:
 			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %sthreads (fid, subject, author) VALUES ('%d', '%s', '%s');", g_szTablePrefix, g_iForumID, g_szPostTitle, g_szUserName);
 		case FORUM_IPBOARDS:
-			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %stopics (title, state, posts, starter_id, start_date, last_poster_id, last_post, starter_name, last_poster_name, poll_state, last_vote, views, forum_id, approved, author_mode, pinned, title_seo, seo_first_name, seo_last_name, last_real_post) VALUES ('%s', 'open', '1', '%d', '%d', '%d', '%d', '%s', '%s', '0', '0', '1','%d', '1', '1', '0', '%s', '%s', '%s', '%d');", g_szTablePrefix, g_szPostTitle, g_iSenderID, g_iTimeStamp, g_iSenderID, g_iTimeStamp, g_szUserName, g_szUserName, g_iForumID, szSeoTitle, szSeoName, szSeoName, g_iTimeStamp);
+		{
+			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %stopics (title, state, posts, starter_id, start_date, last_poster_id, last_post, starter_name, last_poster_name, poll_state, last_vote, views, forum_id, approved, author_mode, pinned, title_seo, seo_first_name, seo_last_name, last_real_post)")
+			format(szSQLQuery, charsmax(szSQLQuery), "%s VALUES ('%s', 'open', '1', '%d', '%d', '%d', '%d', '%s', '%s', '0', '0', '1','%d', '1', '1', '0', '%s', '%s', '%s', '%d');", szSQLQuery,g_szTablePrefix, g_szPostTitle, g_iSenderID, g_iTimeStamp, g_iSenderID, g_iTimeStamp, g_szUserName, g_szUserName, g_iForumID, szSeoTitle, szSeoName, szSeoName, g_iTimeStamp);
+		}
 		case FORUM_XENFORO:
 			formatex(szSQLQuery, charsmax(szSQLQuery), "INSERT INTO %sthread (node_id, title, reply_count, view_count, user_id, username, post_date, last_post_date, discussion_state, last_post_id, last_post_user_id, last_post_username) VALUES ('%d', '%s', '0', '0', '%d', '%s', '%d', '%d', 'visible', '%d', '%d', '%s');", g_szTablePrefix, g_iForumID, g_szPostTitle, g_iSenderID, g_szUserName, g_iTimeStamp, g_iTimeStamp, g_iForumID, g_iSenderID, g_szUserName);
 	}
